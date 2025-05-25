@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+docker
+websockets
+jinja2
+aiohttp
+psutil
