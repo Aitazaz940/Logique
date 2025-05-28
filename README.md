@@ -43,12 +43,7 @@ Logique is a lightweight, web-based application built with FastAPI to monitor an
 
 ## 🚧 Work in Progress
 
-**This project is a work in progress.**  
-We are actively improving the following areas:
-
-- Grouped logs by network are currently disabled and will be improved in future releases.
-- UI/UX polish and accessibility improvements are ongoing.
-- Error handling and edge case support are being enhanced.
+**This project is a work in progress.**
 
 **We are aware of these issues and will work on fixing them as soon as possible.**
 
