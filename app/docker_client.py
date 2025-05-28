@@ -31,9 +31,11 @@ class DockerClient:
             try:
                 load_avg = psutil.getloadavg()
                 load_1min = round(load_avg[0], 2)
+                load_5min = round(load_avg[1], 2)
+                load_15min = round(load_avg[2], 2)
             except (AttributeError, OSError):
                 # Windows doesn't have load average
-                load_1min = round(psutil.cpu_percent(interval=0.1) / 100, 2)
+                load_1min = load_5min = load_15min = None
             
             # Network I/O stats
             net_io = psutil.net_io_counters()
@@ -59,8 +61,12 @@ class DockerClient:
                     "packets_sent": net_io.packets_sent,
                     "packets_recv": net_io.packets_recv
                 },
+                "load_average": {
+                    "1min": load_1min,
+                    "5min": load_5min,
+                    "15min": load_15min
+                },
                 "uptime_seconds": int(uptime_seconds),
-                "load_average": load_1min,
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
@@ -354,31 +360,19 @@ class DockerClient:
                 
         except docker.errors.NotFound:
             logger.error(f"Container {container_id} not found")
-            return f"Error: Container {container_id} not found"
+            return ""
         except Exception as e:
             logger.error(f"Error getting logs for container {container_id}: {e}")
-            return f"Error retrieving logs: {str(e)}"
+            return ""
 
     def get_container_networks(self):
-        """Get all Docker networks and their containers"""
+        """Return all Docker networks with the containers connected to each"""
         try:
             networks = self.client.networks.list()
             network_info = {}
-            
+
+            # Step 1: Initialize each network
             for network in networks:
-                containers_in_network = []
-                for container_id, container_info in network.attrs.get('Containers', {}).items():
-                    try:
-                        container = self.client.containers.get(container_id)
-                        containers_in_network.append({
-                            'id': container.id,
-                            'name': container.name,
-                            'status': container.status,
-                            'ip_address': container_info.get('IPv4Address', '').split('/')[0]
-                        })
-                    except:
-                        continue
-                
                 config = network.attrs.get('IPAM', {}).get('Config')
                 if isinstance(config, list) and config and isinstance(config[0], dict):
                     subnet = config[0].get('Subnet', 'unknown')
@@ -391,10 +385,26 @@ class DockerClient:
                     'driver': network.attrs.get('Driver', 'unknown'),
                     'scope': network.attrs.get('Scope', 'unknown'),
                     'created': network.attrs.get('Created', ''),
-                    'containers': containers_in_network,
+                    'containers': [],
                     'subnet': subnet
                 }
-            
+
+            # Step 2: Add containers into networks based on their NetworkSettings
+            for container in self.client.containers.list(all=True):
+                container_id = container.id
+                container_name = container.name
+                container_status = container.status
+                container_networks = container.attrs.get("NetworkSettings", {}).get("Networks", {})
+
+                for net_name, net_info in container_networks.items():
+                    if net_name in network_info:
+                        network_info[net_name]["containers"].append({
+                            'id': container_id,
+                            'name': container_name,
+                            'status': container_status,
+                            'ip_address': net_info.get('IPAddress', '')
+                        })
+
             return network_info
         except Exception as e:
             logger.error(f"Error getting network information: {e}")

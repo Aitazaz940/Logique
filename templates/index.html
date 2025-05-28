@@ -182,6 +182,10 @@
                   <span class="health-label">Load Avg</span>
                   <span class="health-value" id="load-average">--</span>
                 </div>
+                <div class="health-item">
+                  <span class="health-label">Disk</span>
+                  <span class="health-value" id="disk-usage">--</span>
+                </div>
               </div>
               <div class="health-indicator" id="health-indicator">
                 <div class="health-dot"></div>
@@ -199,9 +203,17 @@
           
           <div class="table-container" id="table-view">
             <table class="containers-table">
+              <colgroup>
+                <col style="width: 220px;">  <!-- Name - increased for better space usage -->
+                <col style="width: 110px;">  <!-- Status - optimized -->
+                <col style="width: 75px;">   <!-- CPU - optimized -->
+                <col style="width: 75px;">   <!-- RAM - optimized -->
+                <col style="width: 200px;">  <!-- Image -->
+                <col style="width: 200px;">  <!-- Actions -->
+              </colgroup>
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <!-- <th>Name</th>
                   <th>Status</th>
                   <th>CPU</th>
                   <th>RAM</th>
@@ -209,6 +221,22 @@
                   <th>Image</th>
                   <th>Container ID</th>
                   <th>Created</th>
+                  <th>Actions</th> -->
+                  <th data-label="Name" onclick="setTableSort('name')" style="cursor:pointer;">
+                    Name <span class="sort-arrow" id="sort-arrow-name"></span>
+                  </th>
+                  <th data-label="Status" onclick="setTableSort('status')" style="cursor:pointer;">
+                    Status <span class="sort-arrow" id="sort-arrow-status"></span>
+                  </th>
+                  <th data-label="CPU" onclick="setTableSort('cpu_percent')" style="cursor:pointer;">
+                    CPU <span class="sort-arrow" id="sort-arrow-cpu_percent"></span>
+                  </th>
+                  <th data-label="RAM" onclick="setTableSort('memory_usage_mb')" style="cursor:pointer;">
+                    RAM <span class="sort-arrow" id="sort-arrow-memory_usage_mb"></span>
+                  </th>
+                  <th>Image</th>
+                  <!-- <th>Network</th> -->
+                  <!-- <th>Container ID</th> -->
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -300,6 +328,14 @@
               <option value="60">1 minute</option>
             </select>
             
+            <label for="load-avg-period">Load average period:</label>
+            <select id="load-avg-period" class="setting-select">
+              <option value="all">All (1/5/15 min)</option>
+              <option value="1min">1 min</option>
+              <option value="5min">5 min</option>
+              <option value="15min">15 min</option>
+            </select>
+
             <label for="chart-points">Chart data points:</label>
             <select id="chart-points" class="setting-select">
               <option value="20">20 points</option>

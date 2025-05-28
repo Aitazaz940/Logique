@@ -46,7 +46,8 @@ let settings = {
     logLevel: 'all',
     refreshInterval: 10,
     chartPoints: 50,
-    groupByNetwork: true
+    groupByNetwork: true,
+    loadAvgPeriod: 'all' // '1min', '5min', '15min', or 'all'
 };
 
 // Activities storage
@@ -54,6 +55,24 @@ let activities = [];
 
 // Network data
 let networksData = {};
+
+// Place this after rendering your container names, or on DOMContentLoaded
+function enableScrollOnOverflow() {
+  document.querySelectorAll('.scrollable-name').forEach(el => {
+    const inner = el.querySelector('.scrollable-inner');
+    const scrollWidth = inner.scrollWidth;
+    const clientWidth = el.clientWidth;
+    console.log(`Container: ${inner.textContent}, scrollWidth: ${scrollWidth}, clientWidth: ${clientWidth}`);
+
+    if (scrollWidth > clientWidth) {
+      el.classList.add('scroll-on-hover');
+      el.style.setProperty('--scroll-amount', `-${scrollWidth - clientWidth}px`);
+    } else {
+      el.classList.remove('scroll-on-hover');
+      el.style.removeProperty('--scroll-amount');
+    }
+  });
+}
 
 // Initialize charts with better performance
 function initializeCharts() {
@@ -341,6 +360,7 @@ function loadSettings() {
     document.getElementById('log-level').value = settings.logLevel;
     document.getElementById('refresh-interval').value = settings.refreshInterval;
     document.getElementById('chart-points').value = settings.chartPoints;
+    document.getElementById('load-avg-period').value = settings.loadAvgPeriod || 'all';
 }
 
 function saveSettings() {
@@ -352,7 +372,8 @@ function saveSettings() {
         groupByNetwork: document.getElementById('group-by-network').checked,
         logLevel: document.getElementById('log-level').value,
         refreshInterval: parseInt(document.getElementById('refresh-interval').value),
-        chartPoints: parseInt(document.getElementById('chart-points').value)
+        chartPoints: parseInt(document.getElementById('chart-points').value),
+        loadAvgPeriod: document.getElementById('load-avg-period').value
     };
 
     // Save to localStorage
@@ -394,8 +415,14 @@ const loadSystemStats = debounce(async () => {
         const response = await fetch('/api/system-stats');
         const stats = await response.json();
         
-        // Update CPU
+        // Update System Stats
         const cpuUsage = stats.cpu_usage_percent;
+        const memUsage = stats.memory.used_percent;
+        const diskUsed = stats.disk.used_gb;
+        const diskTotal = stats.disk.total_gb;
+        const diskPercent = stats.disk.used_percent;
+        const loadAvg = stats.load_average;
+
         document.getElementById('cpu-usage').textContent = `${cpuUsage}%`;
         if (cpuChart) cpuChart.update(cpuUsage);
         
@@ -411,23 +438,43 @@ const loadSystemStats = debounce(async () => {
         
         // Update system health
         document.getElementById('system-uptime').textContent = formatUptime(stats.uptime_seconds);
-        document.getElementById('load-average').textContent = stats.load_average;
-        
-        // Update health indicator
-        const healthIndicator = document.getElementById('health-indicator');
-        const healthDot = healthIndicator.querySelector('.health-dot');
-        const healthText = healthIndicator.querySelector('span');
-        
-        if (cpuUsage > 80 || stats.memory.used_percent > 90) {
-            healthDot.style.backgroundColor = '#ef4444';
-            healthText.textContent = 'System Under Load';
-            healthIndicator.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-            healthIndicator.style.borderColor = 'rgba(239, 68, 68, 0.2)';
-        } else if (cpuUsage > 60 || stats.memory.used_percent > 70) {
-            healthDot.style.backgroundColor = '#f59e0b';
-            healthText.textContent = 'System Moderate Load';
-            healthIndicator.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
-            healthIndicator.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+        document.getElementById('disk-usage').textContent = `${diskUsed} / ${diskTotal} GB`;
+
+        let loadAvgText = 'N/A';
+        if (
+            loadAvg &&
+            loadAvg['1min'] !== null && loadAvg['1min'] !== undefined &&
+            loadAvg['5min'] !== null && loadAvg['5min'] !== undefined &&
+            loadAvg['15min'] !== null && loadAvg['15min'] !== undefined &&
+            (loadAvg['1min'] !== 0 || loadAvg['5min'] !== 0 || loadAvg['15min'] !== 0)
+        ) {
+            if (settings.loadAvgPeriod === 'all') {
+                loadAvgText = `${loadAvg['1min']} / ${loadAvg['5min']} / ${loadAvg['15min']}`;
+            } else {
+                loadAvgText = loadAvg[settings.loadAvgPeriod] !== undefined && loadAvg[settings.loadAvgPeriod] !== null
+                    ? `${loadAvg[settings.loadAvgPeriod]}`
+                    : 'N/A';
+            }
+        }
+        document.getElementById('load-average').textContent = loadAvgText;
+
+        let healthStatus = 'Healthy';
+        let healthColor = '#22c55e';
+        let bgColor = 'rgba(34, 197, 94, 0.1)';
+        let borderColor = 'rgba(34, 197, 94, 0.2)';
+
+        const cpuCores = stats.cpu_cores || 1;
+                
+        if (cpuUsage > 90 || memUsage > 95 || diskPercent > 95 || (loadAvg['1min'] && loadAvg['1min'] > 2 * cpuCores)) {
+            healthStatus = 'Critical';
+            healthColor = '#ef4444';
+            bgColor = 'rgba(239, 68, 68, 0.1)';
+            borderColor = 'rgba(239, 68, 68, 0.2)';
+        } else if (cpuUsage > 75 || memUsage > 80 || diskPercent > 85 || (loadAvg['1min'] && loadAvg['1min'] > cpuCores)) {
+            healthStatus = 'Warning';
+            healthColor = '#f59e0b';
+            bgColor = 'rgba(245, 158, 11, 0.1)';
+            borderColor = 'rgba(245, 158, 11, 0.2)';
         } else {
             healthDot.style.backgroundColor = '#22c55e';
             healthText.textContent = 'System Healthy';
@@ -435,6 +482,14 @@ const loadSystemStats = debounce(async () => {
             healthIndicator.style.borderColor = 'rgba(34, 197, 94, 0.2)';
         }
         
+        const healthIndicator = document.getElementById('health-indicator');
+        const healthDot = healthIndicator.querySelector('.health-dot');
+        const healthText = healthIndicator.querySelector('span');
+        healthDot.style.backgroundColor = healthColor;
+        healthText.textContent = `System ${healthStatus}`;  
+        healthIndicator.style.backgroundColor = bgColor;
+        healthIndicator.style.borderColor = borderColor;
+
     } catch (error) {
         console.error('Error loading system stats:', error);
         addActivity('error', 'System Stats Error', 'Failed to load system statistics');
@@ -446,88 +501,121 @@ const loadContainers = debounce(async () => {
     if (isLoading) return;
 
     try {
-        const response = await fetch('/api/containers');
-        let containers = await response.json();
-        
+        // Fetch containers and networks in parallel
+        const [containersRes, networksRes] = await Promise.all([
+            fetch('/api/containers'),
+            fetch('/api/networks')
+        ]);
+        const containers = await containersRes.json();
+        const networks = await networksRes.json();
+
+        // Save networks data globally for logs, etc.
+        networksData = networks;
+
         // Filter containers based on settings
+        let filteredContainers = containers;
         if (!settings.showExited) {
-            containers = containers.filter(container => container.status.toLowerCase() !== 'exited');
+            filteredContainers = containers.filter(container => container.status.toLowerCase() !== 'exited');
         }
-        
+
         // Update header stats
-        document.getElementById('total-containers').textContent = containers.length;
-        document.getElementById('running-containers').textContent = 
-            containers.filter(c => c.status.toLowerCase() === 'running').length;
-        
-        // Group containers by network if enabled
+        document.getElementById('total-containers').textContent = filteredContainers.length;
+        document.getElementById('running-containers').textContent =
+            filteredContainers.filter(c => c.status.toLowerCase() === 'running').length;
+
+        // Group containers by network using real network data
         if (settings.groupByNetwork) {
-            await groupContainersByNetwork(containers);
+            updateNetworkSidebar(networks);
         } else {
-            updateSidebar(containers);
+            updateSidebar(filteredContainers);
         }
-        
+
         // Update main view (only table view now)
-        updateContainersTable(containers);
-        
+        updateContainersTable(filteredContainers);
+
     } catch (error) {
         console.error('Error loading containers:', error);
         addActivity('error', 'Container Load Error', 'Failed to load container information');
     }
 }, 200);
 
-// Group containers by network
-async function groupContainersByNetwork(containers) {
+async function viewNetworkLogs(networkName) {
+    document.getElementById('network-logs-title').textContent = `${networkName} Network Logs`;
+    document.getElementById('network-logs-modal').classList.add('show');
     try {
-        // Simulate network data - in real implementation, this would come from Docker API
-        const networks = {
-            'bridge': { name: 'bridge', containers: [] },
-            'host': { name: 'host', containers: [] },
-            'none': { name: 'none', containers: [] }
-        };
-        
-        // Group containers by network (simplified logic)
-        containers.forEach(container => {
-            const networkName = container.network || 'bridge';
-            if (!networks[networkName]) {
-                networks[networkName] = { name: networkName, containers: [] };
-            }
-            networks[networkName].containers.push(container);
-        });
-        
-        networksData = networks;
-        updateNetworkSidebar(networks);
-        
-    } catch (error) {
-        console.error('Error grouping containers by network:', error);
-        updateSidebar(containers);
+        const resp = await fetch(`/api/network/${networkName}/logs?tail=500`);
+        const logs = await resp.json();
+        // Optionally sort logs by timestamp if available
+        // logs.sort((a, b) => ...);
+        document.getElementById('network-logs-content').innerHTML = logs.map(log =>
+            `<span style="color:#4A9EFF;font-weight:bold;">[${log.container}]</span> ${escapeHtml(log.line)}`
+        ).join('<br>');
+    } catch (e) {
+        document.getElementById('network-logs-content').textContent = 'Failed to load logs';
     }
 }
+
+// Group containers by network
+// async function groupContainersByNetwork(containers) {
+//     try {
+//         // Simulate network data - in real implementation, this would come from Docker API
+//         const networks = {
+//             'bridge': { name: 'bridge', containers: [] },
+//             'host': { name: 'host', containers: [] },
+//             'none': { name: 'none', containers: [] }
+//         };
+        
+//         // Group containers by network (simplified logic)
+//         containers.forEach(container => {
+//             const networkName = container.network || 'bridge';
+//             if (!networks[networkName]) {
+//                 networks[networkName] = { name: networkName, containers: [] };
+//             }
+//             networks[networkName].containers.push(container);
+//         });
+        
+//         networksData = networks;
+//         updateNetworkSidebar(networks);
+        
+//     } catch (error) {
+//         console.error('Error grouping containers by network:', error);
+//         updateSidebar(containers);
+//     }
+// }
 
 function updateNetworkSidebar(networks) {
     const networksContainer = document.getElementById('networks-container');
     if (!networksContainer) return;
 
-    networksContainer.innerHTML = Object.values(networks)
-        .filter(network => network.containers && network.containers.length > 0) // Only show non-empty groups
-        .map(network => `
+    // Sort network names alphabetically (case-insensitive)
+    const sortedNetworkNames = Object.keys(networks)
+        .filter(name => networks[name].containers && networks[name].containers.length > 0)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    networksContainer.innerHTML = sortedNetworkNames.map(networkName => {
+        const network = networks[networkName];
+        // Sort containers by name in each network
+        const sortedContainers = network.containers.slice().sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+        return `
             <div class="network-group">
-                <div class="network-header" onclick="toggleNetwork('${network.name}')">
+                <div class="network-header" onclick="viewNetworkLogs('${network.name}')">
                     <div class="network-info">
                         <span class="network-name">${network.name}</span>
-                        <span class="network-badge">${network.containers.length}</span>
                     </div>
-                    <div class="network-actions"></div>
+                    <div class="network-badge" style="cursor:pointer;" title="View stacked logs">${sortedContainers.length}</div>
                 </div>
                 <div class="network-containers" id="network-${network.name}">
-                    ${network.containers.map(container => `
+                    ${sortedContainers.map(container => `
                         <div class="container-item" onclick="window.location.href='/container/${container.id}'">
                             <div class="status-dot status-${container.status.toLowerCase()}"></div>
-                            <span class="container-name">${container.name}</span>
+                            <span class="container-name scrollable-name"><span class="scrollable-inner">${container.name}</span></span>
                         </div>
                     `).join('')}
                 </div>
             </div>
-        `).join('');
+        `;
+    }).join('');
+    enableScrollOnOverflow();
 }
 
 // Toggle network visibility
@@ -538,201 +626,134 @@ function toggleNetwork(networkName) {
     }
 }
 
-// View network logs
-// function viewNetworkLogs(networkName) {
-//     document.getElementById('network-logs-title').textContent = `${networkName} Network Logs`;
-//     document.getElementById('network-logs-modal').classList.add('show');
+let currentNetworkLogs = [];
+let currentNetworkName = '';
+let currentContainerColors = {};
+let currentMaxNameLen = 10;
 
-//     // Simulate network logs
-//     const logs = generateNetworkLogs(networkName);
-//     document.getElementById('network-logs-content').textContent = logs;
-// }
-
-// let currentNetworkLogs = [];
-// let currentNetworkName = '';
-// let currentContainerColors = {};
-// let currentMaxNameLen = 10;
+// Escape HTML for safety
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 // Helper: Format and render logs
-// function renderNetworkLogs(logs, containerColors, maxNameLen, logLevel = 'all') {
-//     // Optionally filter by log level
-//     let filteredLogs = logs;
-//     if (logLevel !== 'all') {
-//         filteredLogs = logs.filter(log => {
-//             const msg = log.line.toLowerCase();
-//             if (logLevel === 'error') return msg.includes('error');
-//             if (logLevel === 'warning') return msg.includes('warn') || msg.includes('error');
-//             if (logLevel === 'info') return msg.includes('info') || msg.includes('warn') || msg.includes('error');
-//             return true;
-//         });
-//     }
+function renderNetworkLogs(logs, containerColors, maxNameLen, logLevel = 'all') {
+    let filteredLogs = logs;
+    if (logLevel !== 'all') {
+        filteredLogs = logs.filter(log => {
+            const msg = log.line.toLowerCase();
+            if (logLevel === 'error') return msg.includes('error');
+            if (logLevel === 'warning') return msg.includes('warn') || msg.includes('error');
+            if (logLevel === 'info') return msg.includes('info') || msg.includes('warn') || msg.includes('error');
+            return true;
+        });
+    }
 
-//     return filteredLogs.map(log => {
-//         const paddedName = log.container.padEnd(maxNameLen, ' ');
-//         const rest = log.line.replace(/^\[.*?\]\s*/, '');
-//         const tsMatch = rest.match(/^\[(.*?)\]/);
-//         let timestamp = '';
-//         let message = rest;
-//         if (tsMatch) {
-//             timestamp = tsMatch[1];
-//             message = rest.replace(/^\[.*?\]\s*/, '');
-//         }
-//         let humanTime = '';
-//         if (timestamp) {
-//             const d = new Date(timestamp);
-//             humanTime = !isNaN(d) ? d.toLocaleString() : timestamp;
-//         }
-//         return `<span style="color:${containerColors[log.container]};font-weight:bold;">${paddedName}</span>  <span style="color:#93c5fd;">${humanTime}</span>  ${escapeHtml(message)}`;
-//     }).join('<br>');
-// }
+    return filteredLogs.map(log => {
+        // Show only last 12 chars of container name with ellipsis
+        const shortName = log.container.length > 12 ? '...' + log.container.slice(-12) : log.container;
+        // Format timestamp to human readable (Date / Time AM/PM)
+        let humanTime = '';
+        if (log.timestamp) {
+            const d = new Date(log.timestamp);
+            if (!isNaN(d)) {
+                humanTime = d.toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+            } else {
+                humanTime = log.timestamp;
+            }
+        }
+        // Add extra spacing between parts
+        return `<span style="color:${containerColors[log.container]};font-weight:bold;min-width:90px;display:inline-block;">${shortName}</span>&nbsp;&nbsp;<span style="color:#93c5fd;">${humanTime}</span>&nbsp;&nbsp;${escapeHtml(log.line)}`;
+    }).join('<br>');
+}
 
-// Main function to show network logs
-// async function viewNetworkLogs(networkName) {
-//     document.getElementById('network-logs-title').textContent = `${networkName} Network Logs`;
-//     document.getElementById('network-logs-modal').classList.add('show');
-//     currentNetworkName = networkName;
+// Main function to view logs (from backend)
+async function viewNetworkLogs(networkName) {
+    document.getElementById('network-logs-title').textContent = `${networkName} Network Logs`;
+    document.getElementById('network-logs-modal').classList.add('show');
+    currentNetworkName = networkName;
 
-//     // Get containers in this network
-//     const containers = networksData[networkName]?.containers || [];
-//     let mergedLogs = [];
+    const res = await fetch(`/api/network/${networkName}/logs`);
+    const logs = await res.json();
 
-//     // Assign a color to each container
-//     const colorPalette = [
-//         '#4A9EFF', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4', '#f472b6', '#eab308'
-//     ];
-//     const containerColors = {};
-//     containers.forEach((container, idx) => {
-//         containerColors[container.name] = colorPalette[idx % colorPalette.length];
-//     });
+    // Get container info from cached data (assumes networksData is globally available)
+    const containers = networksData[networkName]?.containers || [];
+    const containerColors = {};
+    const colorPalette = [
+        '#4A9EFF', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4', '#f472b6', '#eab308'
+    ];
+    containers.forEach((container, idx) => {
+        containerColors[container.name] = colorPalette[idx % colorPalette.length];
+    });
 
-//     // Collect logs with container name and timestamp
-//     containers.forEach(container => {
-//         const logs = generateContainerLogs(container.name).split('\n');
-//         logs.forEach(line => {
-//             if (line.trim()) {
-//                 const tsMatch = line.match(/\[(.*?)\]/);
-//                 mergedLogs.push({
-//                     container: container.name,
-//                     line: line,
-//                     timestamp: tsMatch ? tsMatch[1] : ''
-//                 });
-//             }
-//         });
-//     });
+    // Calculate max length for padding
+    const maxNameLen = Math.max(...containers.map(c => c.name.length), 10);
 
-//     // Sort by timestamp
-//     mergedLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-//     const maxNameLen = Math.max(...containers.map(c => c.name.length), 10);
+    currentNetworkLogs = logs;
+    currentContainerColors = containerColors;
+    currentMaxNameLen = maxNameLen;
 
-//     // Store for refresh/filter
-//     currentNetworkLogs = mergedLogs;
-//     currentContainerColors = containerColors;
-//     currentMaxNameLen = maxNameLen;
+    document.getElementById('network-logs-content').innerHTML =
+        renderNetworkLogs(logs, containerColors, maxNameLen, document.getElementById('network-log-level-filter').value);
 
-//     // Render
-//     document.getElementById('network-logs-content').innerHTML =
-//         renderNetworkLogs(mergedLogs, containerColors, maxNameLen, document.getElementById('network-log-level-filter').value);
-// }
+    // Auto-scroll to bottom
+    const logsContent = document.getElementById('network-logs-content');
+    logsContent.scrollTop = logsContent.scrollHeight;
+}
 
-// // Refresh network logs
-// function refreshNetworkLogs() {
-//     if (currentNetworkName) {
-//         viewNetworkLogs(currentNetworkName);
-//     }
-// }
+// Refresh button handler
+function refreshNetworkLogs() {
+    if (currentNetworkName) {
+        viewNetworkLogs(currentNetworkName);
+    }
+}
 
-// // Filter network logs
-// function filterNetworkLogs() {
-//     document.getElementById('network-logs-content').innerHTML =
-//         renderNetworkLogs(currentNetworkLogs, currentContainerColors, currentMaxNameLen, document.getElementById('network-log-level-filter').value);
-// }
+// Log level filter
+function filterNetworkLogs() {
+    document.getElementById('network-logs-content').innerHTML =
+        renderNetworkLogs(currentNetworkLogs, currentContainerColors, currentMaxNameLen, document.getElementById('network-log-level-filter').value);
+}
 
-// // Generate simulated network logs
-// function generateNetworkLogs(networkName) {
-//     const logEntries = [];
-//     const containers = networksData[networkName]?.containers || [];
+// Download logs as .txt
+function downloadNetworkLogs() {
+    const networkName = currentNetworkName;
+    const logs = currentNetworkLogs.map(log => `[${log.container}] ${log.line}`).join('\n');
+    const blob = new Blob([logs], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${networkName}-network-logs-${new Date().toISOString().slice(0, 19)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
 
-//     for (let i = 0; i < 50; i++) {
-//         const timestamp = new Date(Date.now() - Math.random() * 3600000).toISOString();
-//         const container = containers[Math.floor(Math.random() * containers.length)];
-//         const logTypes = ['INFO', 'WARN', 'ERROR', 'DEBUG'];
-//         const logType = logTypes[Math.floor(Math.random() * logTypes.length)];
-        
-//         const messages = [
-//             `Container ${container?.name || 'unknown'} connected to network ${networkName}`,
-//             `Network traffic: ${Math.floor(Math.random() * 1000)}KB/s`,
-//             `DNS resolution for ${container?.name || 'unknown'}`,
-//             `Port mapping updated for container ${container?.name || 'unknown'}`,
-//             `Network bridge configuration changed`,
-//             `Container ${container?.name || 'unknown'} disconnected from network`
-//         ];
-        
-//         const message = messages[Math.floor(Math.random() * messages.length)];
-//         logEntries.push(`[${timestamp}] ${logType}: ${message}`);
-//     }
-
-//     return logEntries.join('\n');
-// }
-
-// // Close network logs modal
-// function closeNetworkLogs() {
-//     document.getElementById('network-logs-modal').classList.remove('show');
-// }
-
-// // Filter network logs
-// function filterNetworkLogs() {
-//     const level = document.getElementById('network-log-level-filter').value;
-//     const logsContent = document.getElementById('network-logs-content');
-//     const allLogs = logsContent.textContent;
-
-//     if (level === 'all') {
-//         return;
-//     }
-
-//     const lines = allLogs.split('\n');
-//     const filtered = lines.filter(line => {
-//         const lowerLine = line.toLowerCase();
-//         switch(level) {
-//             case 'error':
-//                 return lowerLine.includes('error');
-//             case 'warning':
-//                 return lowerLine.includes('warn') || lowerLine.includes('error');
-//             case 'info':
-//                 return lowerLine.includes('info') || lowerLine.includes('warn') || lowerLine.includes('error');
-//             default:
-//                 return true;
-//         }
-//     });
-
-//     logsContent.textContent = filtered.join('\n');
-// }
-
-// // Refresh network logs
-// function refreshNetworkLogs() {
-//     const networkName = document.getElementById('network-logs-title').textContent.split(' ')[0];
-//     const logs = generateNetworkLogs(networkName);
-//     document.getElementById('network-logs-content').textContent = logs;
-// }
-
-// // Download network logs
-// function downloadNetworkLogs() {
-//     const networkName = document.getElementById('network-logs-title').textContent.split(' ')[0];
-//     const logs = document.getElementById('network-logs-content').textContent;
-//     const blob = new Blob([logs], { type: 'text/plain' });
-//     const url = window.URL.createObjectURL(blob);
-//     const a = document.createElement('a');
-//     a.href = url;
-//     a.download = `${networkName}-network-logs-${new Date().toISOString().slice(0, 19)}.txt`;
-//     document.body.appendChild(a);
-//     a.click();
-//     document.body.removeChild(a);
-//     window.URL.revokeObjectURL(url);
-// }
+// Close modal
+function closeNetworkLogs() {
+    document.getElementById('network-logs-modal').classList.remove('show');
+}
 
 // Update sidebar containers (fallback when not grouping by network)
 function updateSidebar(containers) {
     const networksContainer = document.getElementById('networks-container');
     if (!networksContainer) return;
+
+    // Sort containers by name (case-insensitive)
+    containers = containers.slice().sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
     networksContainer.innerHTML = `
         <div class="network-group">
@@ -746,18 +767,67 @@ function updateSidebar(containers) {
                 ${containers.map(container => `
                     <div class="container-item" onclick="window.location.href='/container/${container.id}'">
                         <div class="status-dot status-${container.status.toLowerCase()}"></div>
-                        <span class="container-name">${container.name}</span>
+                        <span class="container-name scrollable-name"><span class="scrollable-inner">${container.name}</span></span>
                     </div>
                 `).join('')}
             </div>
         </div>
     `;
+    enableScrollOnOverflow();
+}
+
+let tableSort = { key: 'name', asc: true };
+let lastContainersData = []; // Store last loaded containers
+
+function setTableSort(key) {
+    if (tableSort.key === key) {
+        tableSort.asc = !tableSort.asc;
+    } else {
+        tableSort.key = key;
+        tableSort.asc = true;
+    }
+    // Instead of reloading from server, just re-render table
+    updateContainersTable(lastContainersData);
+}
+
+function sortContainers(containers) {
+    const key = tableSort.key;
+    const asc = tableSort.asc ? 1 : -1;
+    return containers.slice().sort((a, b) => {
+        if (key === 'cpu_percent' || key === 'memory_usage_mb') {
+            return asc * (a[key] - b[key]);
+        }
+        if (key === 'status') {
+            return asc * a.status.localeCompare(b.status, undefined, { sensitivity: 'base' });
+        }
+        // Default: name
+        return asc * a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
+}
+
+function updateSortArrows() {
+    const columns = ['name', 'status', 'cpu_percent', 'memory_usage_mb'];
+    columns.forEach(col => {
+        const arrow = document.getElementById('sort-arrow-' + col);
+        if (!arrow) return;
+        if (tableSort.key === col) {
+            arrow.textContent = tableSort.asc ? '▲' : '▼';
+            arrow.style.color = '#4A9EFF';
+        } else {
+            arrow.textContent = '';
+        }
+    });
 }
 
 // Update containers table
 function updateContainersTable(containers) {
+    lastContainersData = containers.slice(); // Save for instant re-sorting
+
     const tableBody = document.getElementById('containers-table-body');
     if (!tableBody) return;
+
+    // Sort containers before rendering
+    containers = sortContainers(containers);
 
     tableBody.innerHTML = containers.map(container => `
         <tr>
@@ -765,7 +835,7 @@ function updateContainersTable(containers) {
                 <div class="container-name-cell">
                     <div class="status-dot status-${container.status.toLowerCase()}"></div>
                     <a href="/container/${container.id}" style="color: #4A9EFF; text-decoration: none;">
-                        ${container.name}
+                        <span class="scrollable-name"><span class="scrollable-inner">${container.name}</span></span>
                     </a>
                 </div>
             </td>
@@ -777,10 +847,7 @@ function updateContainersTable(containers) {
             </td>
             <td data-label="CPU">${container.cpu_percent.toFixed(2)}%</td>
             <td data-label="RAM">${container.memory_usage_mb.toFixed(0)} MiB</td>
-            <td data-label="Network">${(Math.random() * 10).toFixed(1)} KB/s</td>
             <td data-label="Image">${container.image}</td>
-            <td data-label="Container ID"><code>${container.id.substring(0, 12)}</code></td>
-            <td data-label="Created">${formatTimeAgo(container.created)}</td>
             <td data-label="Actions">
                 <div class="action-buttons">
                     ${container.status.toLowerCase() === 'running' ? 
@@ -793,7 +860,23 @@ function updateContainersTable(containers) {
             </td>
         </tr>
     `).join('');
+    enableScrollOnOverflow();
+    updateSortArrows();
 }
+
+let sortArrowTimeout;
+
+document.querySelectorAll('.containers-table th[onclick]').forEach(th => {
+    th.addEventListener('mouseenter', () => {
+        th.classList.add('active');
+        clearTimeout(sortArrowTimeout);
+    });
+    th.addEventListener('mouseleave', () => {
+        sortArrowTimeout = setTimeout(() => {
+            th.classList.remove('active');
+        }, 5000);
+    });
+});
 
 // Container control functions with better UX and activity logging
 async function controlContainer(containerId, action) {

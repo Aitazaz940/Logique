@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 import json
 from typing import Optional
+from dateutil.parser import parse as parse_dt
 
 # Configure logging
 logging.basicConfig(
@@ -115,6 +116,53 @@ async def get_networks():
         return docker_client.get_container_networks()
     except Exception as e:
         logger.error(f"Error getting networks: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/network/{network_name}/logs")
+async def get_network_logs(network_name: str, tail: int = 500):
+    """Get merged logs for all containers in a network, sorted by Docker timestamp"""
+    try:
+        if not docker_client:
+            raise HTTPException(status_code=500, detail="Docker client not available")
+
+        networks = docker_client.get_container_networks()
+        if network_name not in networks:
+            raise HTTPException(status_code=404, detail="Network not found")
+
+        containers = networks[network_name]['containers']
+        merged_logs = []
+
+        for c in containers:
+            logs = docker_client.get_container_logs(c['id'], tail=tail)
+            if not logs.strip():
+                continue
+            for line in logs.splitlines():
+                # Always use the first space-separated part as the Docker timestamp
+                parts = line.split(' ', 1)
+                if len(parts) == 2:
+                    docker_ts = parts[0]
+                    message = parts[1]
+                else:
+                    docker_ts = ""
+                    message = line
+                merged_logs.append({
+                    "container": c['name'],
+                    "line": message,
+                    "timestamp": docker_ts
+                })
+
+        # Sort logs by Docker timestamp (ISO8601)
+        def parse_ts(log):
+            try:
+                return parse_dt(log["timestamp"])
+            except Exception:
+                return datetime.min
+        merged_logs.sort(key=parse_ts)
+
+        return merged_logs
+
+    except Exception as e:
+        logger.error(f"Error getting network logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/container/{container_id}", response_class=HTMLResponse)
