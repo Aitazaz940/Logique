@@ -45,8 +45,6 @@ Logique is a lightweight, web-based application built with FastAPI to monitor an
 
 **This project is a work in progress.**
 
-**We are aware of these issues and will work on fixing them as soon as possible.**
-
 ---
 
 ## 🛠️ Prerequisites
