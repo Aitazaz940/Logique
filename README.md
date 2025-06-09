@@ -61,7 +61,7 @@ Make sure you have the following installed:
 
 **Run with Docker:**
 ```bash
-sudo docker run --restart unless-stopped -d -p 9075:8000 \
+sudo docker run --restart unless-stopped --name Logique -d -p 9075:8000 \
    -v /var/run/docker.sock:/var/run/docker.sock \
    aitazaz91/logique:latest
 ```

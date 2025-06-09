@@ -6,3 +6,5 @@ jinja2
 aiohttp
 psutil
 python-dateutil
+PyJWT
+python-multipart

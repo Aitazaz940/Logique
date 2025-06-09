@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logique Setup - Initial Configuration</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <div class="setup-header">
+                <div class="logo">
+                    <span>Logique</span>
+                </div>
+                <h1>Welcome to Logique</h1>
+                <p>Set up your administrator account to get started</p>
+            </div>
+            
+            <form class="setup-form" method="post" action="/setup">
+                <div class="form-group">
+                    {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endif %}
+
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required 
+                           placeholder="Enter your username" autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required 
+                            placeholder="Enter your password" autocomplete="new-password">
+                        <button type="button" class="show-password-btn" onclick="togglePassword('password', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <small>Password must be at least 8 characters long</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" required 
+                            placeholder="Confirm your password" autocomplete="new-password">
+                        <button type="button" class="show-password-btn" onclick="togglePassword('confirm_password', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="setup-btn">Create Account & Continue</button>
+            </form>
+                
+            <div class="setup-info">
+                <h3>What You Can Do with Containers</h3>
+                <ul>
+                    <li>Your passwords are securely stored inside containers and deleted when the container is removed.</li>
+                    <li>Start, stop, or restart containers with a single click.</li>
+                    <li>Monitor container performance live and receive alerts for issues like unexpected exits or restarts.</li>
+                    <li>Track system resource live and see visual alerts for abnormal behavior.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .setup-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            padding: 20px;
+        }
+
+        .setup-card {
+            background: #2a2a2a;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid #3a3a3a;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .setup-header .logo span {
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            font-weight: 900;
+            font-size: 2.5rem;
+            letter-spacing: 0.04em;
+            color: #e5e5e5;
+            text-transform: uppercase;
+        }
+
+        .setup-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 10px 0 4px 0;
+        }
+
+        .setup-header p {
+            color: #888;
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+
+        .setup-form {
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #e5e5e5;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+        }
+
+        .form-group small {
+            color: #888;
+            font-size: 14px;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .setup-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #4a9eff 0%, #3b82f6 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .setup-btn:hover {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(74, 158, 255, 0.3);
+        }
+
+        .setup-info {
+            border-top: 1px solid #3a3a3a;
+            padding-top: 24px;
+        }
+
+        .setup-info h3 {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .setup-info ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .setup-info li {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .setup-info li::before {
+            content: "✓";
+            color: #22c55e;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .show-password-btn {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.2em;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .show-password-btn:active {
+            color: #4a9eff;
+        }
+
+        .show-password-btn i {
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .error-message {
+            background-color: #ff4d4f;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+    <script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+    </script>
+
+</body>
+</html>

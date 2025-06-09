@@ -1,0 +1,46 @@
+# Python environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+
+# Git
+.git
+.gitignore
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Docs and backups
+*.md
+static/style_backup.css
+Working_Backup_2.0.1/
+Running_Instructions.md
+templates/container_detail.html
+Unused/
+app/data/users.json
+app/data/secret.key
+*.sqlite3
+*.db
+.env
+*.so
+*.dll
+*.dylib
+node_modules/
+package-lock.json
+yarn.lock

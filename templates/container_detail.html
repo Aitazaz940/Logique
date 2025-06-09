@@ -5,84 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ container.name }} - Logique</title>
   <link rel="stylesheet" href="/static/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
+  <!-- Loading overlay -->
+  <div class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading container details...</div>
+  </div>
+
   <div class="container-detail">
     <!-- Fixed Header -->
     <header class="header">
       <div class="header-left">
         <div class="logo">
-          <!-- <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="8" width="24" height="12" rx="2" fill="#4A9EFF" opacity="0.8"/>
-            <rect x="6" y="4" width="4" height="4" rx="1" fill="#4A9EFF"/>
-            <rect x="12" y="4" width="4" height="4" rx="1" fill="#4A9EFF"/>
-            <rect x="18" y="4" width="4" height="4" rx="1" fill="#4A9EFF"/>
-            <rect x="4" y="10" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="8" y="10" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="12" y="10" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="16" y="10" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="20" y="10" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="4" y="14" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="8" y="14" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="12" y="14" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="16" y="14" width="3" height="3" rx="0.5" fill="#ffffff"/>
-            <rect x="20" y="14" width="3" height="3" rx="0.5" fill="#ffffff"/>
-          </svg> -->
-          <span>Logique</span>
+          <a href="/" style="color: inherit; text-decoration: none;">
+            <span>Logique</span>
+          </a>
         </div>
       </div>
+
       <div class="header-right">
-        <a href="/" class="btn btn-sm btn-secondary">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5m7-7l-7 7 7 7"/>
-          </svg>
-          Back to Dashboard
-        </a>
-        <button class="header-btn" onclick="openSettings()" title="Settings">
+        <a href="/" class="header-btn" title="Back to Dashboard">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+            <path d="M19 12H5"/>
+            <path d="M12 19l-7-7 7-7"/>
           </svg>
-          Settings
+          Dashboard
+        </a>
+        
+        <button class="header-btn" onclick="refreshContainerData()" title="Refresh Container Data">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+          Refresh
         </button>
       </div>
     </header>
 
-    <!-- Container Details -->
-    <main class="container-detail-main">
+    <div class="container-detail-main">
       <!-- Container Header -->
       <div class="container-detail-header">
         <div class="header-info">
-          <h1 id="container-name">{{ container.name }}</h1>
+          <h1>{{ container.name }}</h1>
           <div class="container-meta">
-            <span class="container-id">Container ID: {{ container.short_id }}</span>
-            <span class="status-badge status-{{ container.status.lower() }}" id="container-status">
+            <span class="status-badge status-{{ container.status.lower() }}">
               <div class="status-dot status-{{ container.status.lower() }}"></div>
               {{ container.status }}
             </span>
-            <span class="container-image">Image: {{ container.image }}</span>
+            <span>{{ container.image }}</span>
+            <span>ID: {{ container.short_id }}</span>
           </div>
         </div>
+        
         <div class="container-actions">
           {% if container.status.lower() == 'running' %}
-          <button class="btn btn-sm stop" id="stop-btn" onclick="controlContainer('{{ container.id }}', 'stop')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="6" y="4" width="4" height="16"/>
-              <rect x="14" y="4" width="4" height="16"/>
-            </svg>
-            Stop
-          </button>
+            <button class="action-btn stop" onclick="controlContainer('{{ container.id }}', 'stop')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+              </svg>
+              Stop
+            </button>
           {% else %}
-          <button class="btn btn-sm start" id="start-btn" onclick="controlContainer('{{ container.id }}', 'start')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5,3 19,12 5,21"/>
-            </svg>
-            Start
-          </button>
+            <button class="action-btn start" onclick="controlContainer('{{ container.id }}', 'start')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5,3 19,12 5,21"/>
+              </svg>
+              Start
+            </button>
           {% endif %}
-          <button class="btn btn-sm restart" id="restart-btn" onclick="controlContainer('{{ container.id }}', 'restart')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          
+          <button class="action-btn restart" onclick="controlContainer('{{ container.id }}', 'restart')" 
+                  {% if container.status.lower() != 'running' %}disabled{% endif %}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
               <path d="M21 3v5h-5"/>
               <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -90,10 +91,11 @@
             </svg>
             Restart
           </button>
-          <button class="btn btn-sm remove" onclick="confirmRemoveContainer('{{ container.id }}', '{{ container.name }}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          
+          <button class="action-btn remove" onclick="confirmRemoveContainer('{{ container.id }}', '{{ container.name }}')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3,6 5,6 21,6"/>
-              <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+              <path d="M19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"/>
             </svg>
             Remove
           </button>
@@ -101,308 +103,149 @@
       </div>
 
       <!-- Container Stats -->
-      <!-- <div class="container-stats">
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>CPU Usage</h3>
-            <div class="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="4" y="4" width="16" height="16" rx="2"/>
-                <rect x="9" y="9" width="6" height="6"/>
-              </svg>
-            </div>
-          </div>
-          <div class="stat-value" id="container-cpu">{{ "%.2f"|format(container.cpu_percent) }}%</div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Memory Usage</h3>
-            <div class="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/>
-                <path d="M15 5h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/>
-              </svg>
-            </div>
-          </div>
-          <div class="stat-value" id="container-memory">{{ "%.0f"|format(container.memory_usage_mb) }} MiB</div>
-          <div class="stat-sub">{{ "%.1f"|format(container.memory_percent) }}% of limit</div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Network I/O</h3>
-            <div class="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 3h5v5M4 20L21 3"/>
-              </svg>
-            </div>
-          </div>
-          <div class="stat-value" id="container-network">
-            ↓{{ "%.1f"|format(container.network_rx_mb) }} MB
-          </div>
-          <div class="stat-sub">↑{{ "%.1f"|format(container.network_tx_mb) }} MB</div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <h3>Uptime</h3>
-            <div class="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12,6 12,12 16,14"/>
-              </svg>
-            </div>
-          </div>
-          <div class="stat-value" id="container-uptime">
-            {% if container.status.lower() == 'running' and container.uptime_seconds %}
-              {{ container.uptime_seconds|format_uptime }}
-            {% else %}
-              Not running
-            {% endif %}
-          </div>
-        </div>
-      </div> -->
-
       <div class="container-stats">
         <div class="stat-card">
           <div class="stat-header">CPU Usage</div>
-          <div class="stat-value" id="container-cpu">{{ "%.2f"|format(container.cpu_percent) }}%</div>
+          <div class="stat-value" id="cpu-usage">{{ "%.2f"|format(container.cpu_percent) }}%</div>
         </div>
-      <div class="stat-card">
-        <div class="stat-header">Memory Usage</div>
-        <div class="stat-value" id="container-memory">{{ "%.0f"|format(container.memory_usage_mb) }} MiB</div>
-      </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">Memory Usage</div>
+          <div class="stat-value" id="memory-usage">{{ "%.1f"|format(container.memory_usage_mb) }} MB</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">Memory Limit</div>
+          <div class="stat-value" id="memory-limit">{{ "%.1f"|format(container.memory_limit_mb) }} MB</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">Network RX</div>
+          <div class="stat-value" id="network-rx">{{ "%.2f"|format(container.network_rx_mb) }} MB</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">Network TX</div>
+          <div class="stat-value" id="network-tx">{{ "%.2f"|format(container.network_tx_mb) }} MB</div>
+        </div>
+        
+        {% if container.uptime_seconds %}
         <div class="stat-card">
           <div class="stat-header">Uptime</div>
-          <div class="stat-value" id="container-uptime">
-            {% if container.status.lower() == 'running' and container.uptime_seconds %}
-              {{ container.uptime_seconds|format_uptime }}
-            {% else %}
-              Not running
-            {% endif %}
-          </div>
+          <div class="stat-value" id="uptime">{{ format_uptime(container.uptime_seconds) }}</div>
         </div>
+        {% endif %}
       </div>
 
       <!-- Enhanced Logs Section -->
-      <section class="logs-section">
+      <div class="logs-section">
         <div class="logs-header">
-          <h3>Container Logs - {{ container.name }}</h3>
+          <h3>Container Logs</h3>
           <div class="logs-controls">
             <div class="log-filters">
-              <select id="log-level-filter" class="filter-select" onchange="filterLogs()">
-                <option value="all">All Logs</option>
-                <option value="error">Errors</option>
-                <option value="warning">Warnings</option>
-                <option value="info">Info</option>
-                <option value="debug">Debug</option>
+              <select class="filter-select" id="log-level-filter" onchange="filterLogs()">
+                <option value="all">All Levels</option>
+                <option value="error">Errors Only</option>
+                <option value="warning">Warnings & Errors</option>
+                <option value="info">Info & Above</option>
               </select>
-              <input type="text" placeholder="Search logs..." id="log-search" oninput="searchLogs()" class="search-input">
-              <button class="btn btn-sm" onclick="toggleAutoRefresh()" id="auto-refresh-btn">
+              
+              <input type="text" class="search-input" id="log-search" placeholder="Search logs..." 
+                     oninput="searchLogs()" />
+            </div>
+            
+            <div class="log-actions">
+              <button class="btn btn-sm btn-secondary" onclick="refreshLogs()" title="Refresh Logs">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                   <path d="M21 3v5h-5"/>
                   <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
                   <path d="M3 21v-5h5"/>
                 </svg>
-                Auto Refresh
+                Refresh
+              </button>
+              
+              <button class="btn btn-sm btn-secondary" onclick="downloadLogs()" title="Download Logs">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7,10 12,15 17,10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download
+              </button>
+              
+              <button class="btn btn-sm" id="auto-refresh-btn" onclick="toggleAutoRefresh()" title="Toggle Auto Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  <path d="M3 21v-5h5"/>
+                </svg>
+                Auto
               </button>
             </div>
-              <div class="log-actions">
-                <button class="btn btn-sm btn-primary" onclick="refreshLogs()">Refresh</button>
-                <button class="btn btn-sm btn-primary" onclick="clearLogs()">Clear</button>
-                <button class="btn btn-sm btn-primary" onclick="downloadLogs()">Download</button>
-              </div>
           </div>
         </div>
         
-        <div class="logs-container" id="logs-container">
-          <div class="logs-stats">
-            <span>Total lines: <span id="total-lines">0</span></span>
+        <div class="logs-container">
+          <div class="logs-stats" id="logs-stats">
+            <span>Total Lines: <span id="total-lines">0</span></span>
             <span>Filtered: <span id="filtered-lines">0</span></span>
-            <span>Last updated: <span id="last-updated">{{ current_time() }}</span></span>
+            <span>Errors: <span id="error-lines">0</span></span>
+            <span>Warnings: <span id="warning-lines">0</span></span>
           </div>
+          
           <div class="logs-content" id="logs-content">
-            <!-- Logs will be populated by JavaScript -->
+            <div class="logs-loading">Loading logs...</div>
           </div>
         </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Settings Modal -->
-  <div class="modal-overlay" id="settings-modal">
-    <div class="modal settings-modal">
-      <div class="modal-header">
-        <h3>Settings</h3>
-        <button class="close-btn" onclick="closeSettings()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="settings-grid">
-          <div class="setting-group">
-            <h4>Display Options</h4>
-            <label class="setting-label">
-              <input type="checkbox" id="show-timestamps" checked>
-              <span class="checkmark"></span>
-              Show timestamps in logs
-            </label>
-            <label class="setting-label">
-              <input type="checkbox" id="word-wrap" checked>
-              <span class="checkmark"></span>
-              Word wrap in logs
-            </label>
-            <label class="setting-label">
-              <input type="checkbox" id="syntax-highlighting" checked>
-              <span class="checkmark"></span>
-              Syntax highlighting
-            </label>
-          </div>
-          
-          <div class="setting-group">
-            <h4>Performance</h4>
-            <label for="refresh-interval">Refresh interval:</label>
-            <select id="refresh-interval" class="setting-select">
-              <option value="5">5 seconds</option>
-              <option value="10" selected>10 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60">1 minute</option>
-            </select>
-            
-            <label for="max-log-lines">Max log lines:</label>
-            <select id="max-log-lines" class="setting-select">
-              <option value="500">500 lines</option>
-              <option value="1000" selected>1000 lines</option>
-              <option value="2000">2000 lines</option>
-              <option value="5000">5000 lines</option>
-            </select>
-          </div>
-          
-          <div class="setting-group">
-            <h4>Logs</h4>
-            <label for="log-level">Default log level:</label>
-            <select id="log-level" class="setting-select">
-              <option value="all">All logs</option>
-              <option value="error">Errors only</option>
-              <option value="warning">Warnings & Errors</option>
-              <option value="info">Info & above</option>
-            </select>
-            
-            <label class="setting-label">
-              <input type="checkbox" id="auto-refresh-logs">
-              <span class="checkmark"></span>
-              Auto-refresh logs
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
       </div>
     </div>
   </div>
 
-  <script src="/static/app.js"></script>
   <script>
-    // Container detail specific JavaScript
     const containerId = '{{ container.id }}';
     const containerName = '{{ container.name }}';
     let autoRefreshInterval = null;
-    let isAutoRefreshing = false;
-    let containerData = {{ container | tojson }};
-    
-    // Initialize container detail page
-    document.addEventListener('DOMContentLoaded', () => {
-      loadContainerLogs();
-      // Start periodic updates for container stats
-      setInterval(updateContainerStats, 10000);
-    });
-    
-    // Update container stats periodically
-    async function updateContainerStats() {
-      try {
-        const response = await fetch(`/api/container/${containerId}`);
-        if (response.ok) {
-          const data = await response.json();
+    let isAutoRefresh = false;
+    let allLogs = [];
+    let filteredLogs = [];
 
-          document.getElementById('container-cpu').textContent = `${data.cpu_percent.toFixed(2)}%`;
-          document.getElementById('container-memory').textContent = `${data.memory_usage_mb.toFixed(0)} MiB`;
-          if (data.status.toLowerCase() === 'running' && data.uptime_seconds) {
-            document.getElementById('container-uptime').textContent = formatUptime(data.uptime_seconds);
-          } else {
-            document.getElementById('container-uptime').textContent = 'Not running';
-          }
-          
-          // Update status badge
-          const statusBadge = document.getElementById('container-status');
-          statusBadge.className = `status-badge status-${data.status.toLowerCase()}`;
-          statusBadge.innerHTML = `
-            <div class="status-dot status-${data.status.toLowerCase()}"></div>
-            ${data.status}
-          `;
-          
-          containerData = data;
-        }
-      } catch (error) {
-        console.error('Error updating container stats:', error);
-      }
-    }
-    
-    // Load container logs with enhanced formatting
-    async function loadContainerLogs() {
-      try {
-        const response = await fetch(`/api/container/${containerId}/logs?tail=1000`);
-        const logs = await response.text();
-        
-        const logsContent = document.getElementById('logs-content');
-        logsContent.innerHTML = formatLogs(logs);
-        logsContent.scrollTop = logsContent.scrollHeight;
-
-        // Update stats
-        const lines = logs.split('\n').filter(line => line.trim());
-        document.getElementById('total-lines').textContent = lines.length;
-        document.getElementById('filtered-lines').textContent = lines.length;
-        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
-        
-        // Auto-scroll to bottom
-        const logsContainer = document.getElementById('logs-container');
-        // logsContainer.scrollTop = logsContainer.scrollHeight;
-        
-      } catch (error) {
-        console.error('Error loading container logs:', error);
-        document.getElementById('logs-content').innerHTML = 
-          `<div class="log-error">Error loading logs: ${error.message}</div>`;
-      }
-    }
-    
-    // Enhanced log formatting with better colors and syntax highlighting
+    // Enhanced log formatting with better highlighting and critical detection
     function formatLogs(logs) {
       if (!logs || logs.trim() === '') {
         return '<div class="logs-empty">No logs available for this container.</div>';
       }
 
       const lines = logs.split('\n');
-      return lines.map(line => {
+      let errorCount = 0;
+      let warningCount = 0;
+      
+      const formattedLines = lines.map(line => {
         if (!line.trim()) return '<div class="log-line"><br></div>';
 
-        // Color coding based on log level and content
+        // Detect critical messages
         let logClass = 'log-default';
         const lowerLine = line.toLowerCase();
 
-        if (lowerLine.includes('error') || lowerLine.includes('err') || lowerLine.includes('fatal') || lowerLine.includes('exception') || lowerLine.includes('panic')) {
+        // Critical log detection with red indicators
+        if (lowerLine.includes('container stopped') || 
+            lowerLine.includes('not accessible') || 
+            lowerLine.includes('failed to load system resources') ||
+            lowerLine.includes('critical') || 
+            lowerLine.includes('fatal') || 
+            lowerLine.includes('panic')) {
+          logClass = 'log-critical';
+          errorCount++;
+        } else if (lowerLine.includes('error') || lowerLine.includes('err') || lowerLine.includes('exception')) {
           logClass = 'log-error';
+          errorCount++;
         } else if (lowerLine.includes('warn') || lowerLine.includes('warning')) {
           logClass = 'log-warning';
-        } else if (lowerLine.includes('info') || lowerLine.includes('information')) {
-          logClass = 'log-info';
-        } else if (lowerLine.includes('debug') || lowerLine.includes('trace')) {
-          logClass = 'log-debug';
-        } else if (lowerLine.includes('success') || lowerLine.includes('ok') || lowerLine.includes('complete') || lowerLine.includes('started') || lowerLine.includes('ready')) {
-          logClass = 'log-success';
+          warningCount++;
         }
 
-        // Extract Docker timestamp (first part of line)
+        // Extract timestamp
         let timestamp = '';
         let message = line;
         const parts = line.split(' ', 2);
@@ -411,217 +254,136 @@
           message = line.slice(parts[0].length + 1);
         }
 
-        // Format timestamp to human readable
+        // Format timestamp
         let humanTime = '';
         if (timestamp) {
           const d = new Date(timestamp);
           if (!isNaN(d)) {
             humanTime = d.toLocaleString(undefined, {
-              year: 'numeric',
-              month: 'short',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: true
+              year: 'numeric', month: 'short', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
             });
           } else {
             humanTime = timestamp;
           }
         }
 
-        // Enhanced formatting
+        // Enhanced formatting with better highlighting
         let formattedLine = escapeHtml(message);
 
         // Highlight log levels
-        formattedLine = formattedLine.replace(
-          /\b(ERROR|WARN|WARNING|INFO|DEBUG|TRACE|FATAL|PANIC)\b/gi,
-          '<span class="log-level-badge log-level-$1">$1</span>'
-        );
+        formattedLine = formattedLine.replace(/\b(ERROR|WARN|WARNING|INFO|DEBUG|TRACE|FATAL|PANIC|CRITICAL)\b/gi, 
+          '<span class="log-level-badge log-level-$1">$1</span>');
 
-        // Highlight JSON objects
-        formattedLine = formattedLine.replace(
-          /(\{[^}]*\}|\[[^\]]*\])/g,
-          '<span class="log-json">$1</span>'
-        );
+        // Highlight JSON objects and arrays
+        formattedLine = formattedLine.replace(/(\{[^}]*\}|\[[^\]]*\])/g, '<span class="log-json">$1</span>');
+
+        // Highlight quoted text with better colors
+        formattedLine = formattedLine.replace(/"([^"]*)"/g, '<span class="log-quoted">"$1"</span>');
+
+        // Highlight brackets and parentheses
+        formattedLine = formattedLine.replace(/[[\]()]/g, '<span class="log-brackets">$&</span>');
 
         // Highlight URLs
-        formattedLine = formattedLine.replace(
-          /(https?:\/\/[^\s]+)/g,
-          '<span class="log-url">$1</span>'
-        );
+        formattedLine = formattedLine.replace(/(https?:\/\/[^\s]+)/g, '<span class="log-url">$1</span>');
 
         // Highlight IP addresses
-        formattedLine = formattedLine.replace(
-          /\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g,
-          '<span class="log-ip">$1</span>'
-        );
+        formattedLine = formattedLine.replace(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g, '<span class="log-ip">$1</span>');
 
-        // Highlight numbers
-        formattedLine = formattedLine.replace(
-          /\b(\d+(?:\.\d+)?(?:ms|s|MB|KB|GB|%)?)\b/g,
-          '<span class="log-number">$1</span>'
-        );
+        // Highlight numbers and metrics
+        formattedLine = formattedLine.replace(/\b(\d+(?:\.\d+)?(?:ms|s|MB|KB|GB|%|Hz|rpm)?)\b/g, '<span class="log-number">$1</span>');
 
         // Highlight file paths
-        formattedLine = formattedLine.replace(
-          /([\/\\][\w\/\\.-]+\.\w+)/g,
-          '<span class="log-path">$1</span>'
-        );
+        formattedLine = formattedLine.replace(/([/\\][\w/\\.-]+\.\w+)/g, '<span class="log-path">$1</span>');
 
-        // Add spacing between timestamp and log message
-        return `<div class="log-line ${logClass}"><span class="log-timestamp">${humanTime}</span>&nbsp;&nbsp;${formattedLine}</div>`;
-      }).join('');
-    }    
-    // Escape HTML to prevent XSS
+        return {
+          html: `<div class="log-line ${logClass}" data-line="${escapeHtml(line)}"><span class="log-timestamp">${humanTime}</span>&nbsp;&nbsp;${formattedLine}</div>`,
+          level: logClass,
+          text: line.toLowerCase()
+        };
+      }).filter(item => item);
+
+      // Update stats
+      updateLogStats(lines.length, formattedLines.length, errorCount, warningCount);
+
+      return formattedLines.map(item => item.html).join('');
+    }
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
-    
-    // Format uptime
-    function formatUptime(seconds) {
-      const days = Math.floor(seconds / 86400);
-      const hours = Math.floor((seconds % 86400) / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      
-      if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-      if (hours > 0) return `${hours}h ${minutes}m`;
-      return `${minutes}m`;
+
+    function updateLogStats(total, filtered, errors, warnings) {
+      document.getElementById('total-lines').textContent = total;
+      document.getElementById('filtered-lines').textContent = filtered;
+      document.getElementById('error-lines').textContent = errors;
+      document.getElementById('warning-lines').textContent = warnings;
     }
-    
-    // Toggle auto-refresh
-    function toggleAutoRefresh() {
-      const btn = document.getElementById('auto-refresh-btn');
-      
-      if (isAutoRefreshing) {
-        clearInterval(autoRefreshInterval);
-        isAutoRefreshing = false;
-        btn.classList.remove('active');
-        btn.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-            <path d="M21 3v5h-5"/>
-            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-            <path d="M3 21v-5h5"/>
-          </svg>
-          Auto Refresh
-        `;
-      } else {
-        autoRefreshInterval = setInterval(() => {
-          loadContainerLogs();
-        }, 5000);
-        isAutoRefreshing = true;
-        btn.classList.add('active');
-        btn.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="6" y="4" width="4" height="16"/>
-            <rect x="14" y="4" width="4" height="16"/>
-          </svg>
-          Stop Auto Refresh
-        `;
-      }
-    }
-    
-    // Control container
-    async function controlContainer(containerId, action) {
+
+    async function loadLogs() {
       try {
-        const response = await fetch(`/container/${containerId}/${action}`, {
-          method: 'POST'
-        });
-        
-        if (response.ok) {
-          // Reload page after successful action
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } else {
-          throw new Error(`Failed to ${action} container`);
-        }
+        const response = await fetch(`/api/container/${containerId}/logs?tail=1000`);
+        const logs = await response.text();
+        allLogs = logs;
+        displayLogs(logs);
       } catch (error) {
-        console.error(`Error ${action} container:`, error);
-        alert(`Error: ${error.message}`);
+        console.error('Error loading logs:', error);
+        document.getElementById('logs-content').innerHTML = 
+          `<div style="color: #ef4444; text-align: center; padding: 40px;">Error loading logs: ${error.message}</div>`;
       }
     }
-    
-    // Confirm remove container
-    function confirmRemoveContainer(containerId, containerName) {
-      if (confirm(`Are you sure you want to remove container "${containerName}"? This action cannot be undone.`)) {
-        controlContainer(containerId, 'remove').then(() => {
-          window.location.href = '/';
-        });
-      }
+
+    function displayLogs(logs) {
+      const logsContent = document.getElementById('logs-content');
+      logsContent.innerHTML = formatLogs(logs);
+      logsContent.scrollTop = logsContent.scrollHeight;
     }
-    
-    // Filter logs
+
     function filterLogs() {
       const level = document.getElementById('log-level-filter').value;
-      const logsContent = document.getElementById('logs-content');
-      const allLines = logsContent.querySelectorAll('.log-line');
-      
-      let visibleCount = 0;
-      allLines.forEach(line => {
-        const text = line.textContent.toLowerCase();
-        let show = true;
-        
-        if (level !== 'all') {
-          switch(level) {
-            case 'error':
-              show = text.includes('error') || text.includes('fatal') || text.includes('exception') || text.includes('panic');
-              break;
-            case 'warning':
-              show = text.includes('warn') || text.includes('error') || text.includes('fatal');
-              break;
-            case 'info':
-              show = text.includes('info') || text.includes('warn') || text.includes('error') || text.includes('fatal');
-              break;
-            case 'debug':
-              show = text.includes('debug') || text.includes('trace');
-              break;
-          }
-        }
-        
-        line.style.display = show ? 'block' : 'none';
-        if (show) visibleCount++;
-      });
-      
-      document.getElementById('filtered-lines').textContent = visibleCount;
-    }
-    
-    // Search logs
-    function searchLogs() {
       const searchTerm = document.getElementById('log-search').value.toLowerCase();
-      const logsContent = document.getElementById('logs-content');
-      const allLines = logsContent.querySelectorAll('.log-line');
       
-      let visibleCount = 0;
-      allLines.forEach(line => {
-        const text = line.textContent.toLowerCase();
-        const show = !searchTerm || text.includes(searchTerm);
-        line.style.display = show ? 'block' : 'none';
-        if (show) visibleCount++;
-      });
+      let filteredLogs = allLogs;
       
-      document.getElementById('filtered-lines').textContent = visibleCount;
+      if (level !== 'all' || searchTerm) {
+        const lines = allLogs.split('\n');
+        const filtered = lines.filter(line => {
+          const lowerLine = line.toLowerCase();
+          
+          // Level filter
+          let levelMatch = true;
+          if (level === 'error') {
+            levelMatch = lowerLine.includes('error') || lowerLine.includes('critical') || lowerLine.includes('fatal');
+          } else if (level === 'warning') {
+            levelMatch = lowerLine.includes('warn') || lowerLine.includes('error') || lowerLine.includes('critical') || lowerLine.includes('fatal');
+          } else if (level === 'info') {
+            levelMatch = lowerLine.includes('info') || lowerLine.includes('warn') || lowerLine.includes('error') || lowerLine.includes('critical') || lowerLine.includes('fatal');
+          }
+          
+          // Search filter
+          const searchMatch = !searchTerm || lowerLine.includes(searchTerm);
+          
+          return levelMatch && searchMatch;
+        });
+        
+        filteredLogs = filtered.join('\n');
+      }
+      
+      displayLogs(filteredLogs);
     }
-    
-    // Refresh logs
+
+    function searchLogs() {
+      filterLogs();
+    }
+
     function refreshLogs() {
-      loadContainerLogs();
+      loadLogs();
     }
-    
-    // Clear logs
-    function clearLogs() {
-      document.getElementById('logs-content').innerHTML = '<div class="logs-empty">Logs cleared. Refresh to reload.</div>';
-      document.getElementById('total-lines').textContent = '0';
-      document.getElementById('filtered-lines').textContent = '0';
-    }
-    
-    // Download logs
+
     function downloadLogs() {
-      const logs = document.getElementById('logs-content').textContent;
-      const blob = new Blob([logs], { type: 'text/plain' });
+      const blob = new Blob([allLogs], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -631,20 +393,111 @@
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     }
-    
-    // Settings functions
-    function openSettings() {
-      document.getElementById('settings-modal').classList.add('show');
+
+    function toggleAutoRefresh() {
+      const btn = document.getElementById('auto-refresh-btn');
+      
+      if (isAutoRefresh) {
+        clearInterval(autoRefreshInterval);
+        isAutoRefresh = false;
+        btn.classList.remove('active');
+        btn.title = 'Enable Auto Refresh';
+      } else {
+        autoRefreshInterval = setInterval(loadLogs, 5000);
+        isAutoRefresh = true;
+        btn.classList.add('active');
+        btn.title = 'Disable Auto Refresh';
+      }
     }
-    
-    function closeSettings() {
-      document.getElementById('settings-modal').classList.remove('show');
+
+    async function refreshContainerData() {
+      try {
+        const response = await fetch(`/api/container/${containerId}/details`);
+        const container = await response.json();
+        
+        // Update stats
+        document.getElementById('cpu-usage').textContent = `${container.cpu_percent.toFixed(2)}%`;
+        document.getElementById('memory-usage').textContent = `${container.memory_usage_mb.toFixed(1)} MB`;
+        document.getElementById('memory-limit').textContent = `${container.memory_limit_mb.toFixed(1)} MB`;
+        document.getElementById('network-rx').textContent = `${container.network_rx_mb.toFixed(2)} MB`;
+        document.getElementById('network-tx').textContent = `${container.network_tx_mb.toFixed(2)} MB`;
+        
+        if (container.uptime_seconds) {
+          document.getElementById('uptime').textContent = formatUptime(container.uptime_seconds);
+        }
+        
+        // Refresh logs
+        loadLogs();
+      } catch (error) {
+        console.error('Error refreshing container data:', error);
+      }
     }
-    
-    function saveSettings() {
-      // Implement settings save logic
-      closeSettings();
+
+    function formatUptime(seconds) {
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      
+      if (days > 0) return `${days}d ${hours}h`;
+      if (hours > 0) return `${hours}h ${minutes}m`;
+      return `${minutes}m`;
     }
+
+    async function controlContainer(containerId, action) {
+      const button = event.target;
+      const originalText = button.textContent;
+      
+      button.disabled = true;
+      button.innerHTML = '<span class="spinner"></span>';
+      
+      try {
+        const response = await fetch(`/container/${containerId}/${action}`, {
+          method: 'POST'
+        });
+        
+        if (response.ok) {
+          button.textContent = 'Done!';
+          button.style.backgroundColor = 'rgba(34, 197, 94, 0.3)';
+          
+          setTimeout(() => {
+            location.reload();
+          }, 1000);
+        } else {
+          throw new Error(`Failed to ${action} container`);
+        }
+      } catch (error) {
+        console.error(`Error ${action} container:`, error);
+        button.textContent = 'Error';
+        button.style.backgroundColor = 'rgba(239, 68, 68, 0.3)';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.backgroundColor = '';
+          button.disabled = false;
+        }, 2000);
+      }
+    }
+
+    function confirmRemoveContainer(containerId, containerName) {
+      if (confirm(`Are you sure you want to remove container "${containerName}"? This action cannot be undone.`)) {
+        controlContainer(containerId, 'remove');
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLogs();
+      
+      // Auto-refresh container stats every 10 seconds
+      setInterval(refreshContainerData, 10000);
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+      }
+    });
   </script>
 </body>
 </html>

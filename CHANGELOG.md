@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+## [3.0.0] - 2025-06-09
+
+### Added
+- **Completely redesigned UI:** Modern, compact, and professional look across the entire interface, including dashboard, setup and login.
+- **User management:** Admins can add child users directly from the dashboard. The first user is always an admin.
+- **Child user roles:** Child users can view logs and modify their own settings, but cannot control containers.
+- **Real-time updates via WebSocket:** System stats and container data now update instantly without polling.
+- **Stacked network logs:** View merged, timestamp-sorted logs from all containers in a network with enhanced formatting.
+- **Show/hide password toggle:** Available in setup, login, and add user forms for improved UX.
+- **Per-user settings:** Each user’s preferences are stored and applied independently.
+- **Quick access Add User button:** Visible only to admins in the top bar.
+
+### Changed
+- **Dashboard charts:** Unified visual style, consistent layout, and improved spacing for CPU, Memory, and Network graphs.
+- **Log formatting:** Enhanced for clarity, color-coded output, and improved readability in both single and stacked views.
+- **Activity and error feedback:** More informative messages with clear icons for success, warning, and errors.
+- **Action buttons:** Container controls are now visible only to admins.
+
+### Fixed
+- **Login/setup validation:** Clear feedback for password mismatch, incorrect credentials, and user creation errors.
+- **WebSocket reconnect logic:** Improved stability and error handling for all real-time updates.
+- **Dashboard alignment issues:** Resolved inconsistent chart/table spacing and sidebar order.
+- **Scrollbar behavior:** Improved scrolling and overflow handling in modals and tables.
+
+### Removed
+- **Unused columns:** Removed container ID and network usage from the main dashboard for a cleaner layout.
+
 ## [2.0.0] - 2025-05-28
 ### Added
 - Stacked logs: Show logs from all containers in a network, merged and sorted by timestamp.
