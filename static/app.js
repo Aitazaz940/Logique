@@ -785,6 +785,7 @@ function saveSettings() {
 
   // Apply settings immediately
   applySettingsImmediately()
+  refreshAll();
   addActivity("success", "Settings Updated", "Application settings have been saved and applied")
 }
 
@@ -1225,7 +1226,7 @@ function appendLogEntry(logEntry) {
 
   const logHtml = `<div class="network-log-row ${levelClass}">
     <span class="network-log-container" style="color:${containerColor}">${shortName}</span>
-    <span class="network-log-timestamp">${humanTime}</span>
+    ${settings.showTimestamps && humanTime ? `<span class="network-log-timestamp">${humanTime}</span>` : ""}
     <span class="network-log-message">${escapeHtml(sanitizedLine)}</span>
   </div>`;
 
@@ -1361,7 +1362,7 @@ function renderNetworkLogs(logs, containerColors, maxNameLen, logLevel = "all") 
 
       return `<div class="network-log-row ${levelClass}">
         <span class="network-log-container" style="color:${containerColors[log.container]}">${shortName}</span>
-        <span class="network-log-timestamp">${humanTime}</span>
+        ${settings.showTimestamps && humanTime ? `<span class="network-log-timestamp">${humanTime}</span>` : ""}
         <span class="network-log-message">${escapeHtml(sanitizedLine)}</span>
       </div>`;
     })
@@ -1410,7 +1411,7 @@ function renderContainerLogs(logs, containerName, logLevel = "all") {
 
       return `<div class="network-log-row ${levelClass}">
         <span class="network-log-container" style="color:${containerColor}">${shortName}</span>
-        <span class="network-log-timestamp">${humanTime}</span>
+        ${settings.showTimestamps && humanTime ? `<span class="network-log-timestamp">${humanTime}</span>` : ""}
         <span class="network-log-message">${escapeHtml(sanitizedLine)}</span>
       </div>`;
     })

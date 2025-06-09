@@ -1259,10 +1259,10 @@ body.loading .loading-overlay {
 
 /* Stacked network logs with better formatting */
 .network-log-row {
-  display: grid;
+  display: flex;
   grid-template-columns: min-content min-content 1fr;
   column-gap: 12px;
-  align-items: start;
+  align-items: flex-start;
   padding: 6px 0;
   margin: 0;
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
@@ -1274,6 +1274,7 @@ body.loading .loading-overlay {
 }
 
 .network-log-container {
+  flex-shrink: 0;
   font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
@@ -1281,12 +1282,14 @@ body.loading .loading-overlay {
 }
 
 .network-log-timestamp {
+  flex-shrink: 0;
   color: #93c5fd;
   white-space: nowrap;
   font-size: 12px;
 }
 
 .network-log-message {
+  flex: 1;
   white-space: pre-wrap;
   word-break: break-word;
 }
